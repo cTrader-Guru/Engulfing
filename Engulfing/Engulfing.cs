@@ -30,6 +30,8 @@ namespace cAlgo.Robots
     [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
     public class Engulfing : Robot
     {
+        #region Enums
+
         /// <summary>
         /// Selezione per le opzioni della scelta in merito alla base di calcolo
         /// </summary>
@@ -46,6 +48,10 @@ namespace cAlgo.Robots
 
         }
 
+        #endregion
+
+        #region Identity Params
+
         /// <summary>
         /// ID prodotto, identificativo, viene fornito da ctrader.guru
         /// </summary>
@@ -59,7 +65,11 @@ namespace cAlgo.Robots
         /// <summary>
         /// La versione del prodotto, progressivo, utilie per controllare gli aggiornamenti se viene reso disponibile sul sito ctrader.guru
         /// </summary>
-        public const string VERSION = "1.0.1";
+        public const string VERSION = "1.0.2";
+
+        #endregion
+
+        #region Params
 
         /// <summary>
         /// L'indirizzo del prodotto su ctrader.guru
@@ -204,6 +214,10 @@ namespace cAlgo.Robots
         [Parameter("TOP Period", Group = "Filters", DefaultValue = 7, MinValue = 0)]
         public int TOP { get; set; }
 
+        #endregion
+
+        #region Property
+
         /// <summary>
         /// Registra l'apertura della posizione nella candela corrente
         /// </summary>
@@ -213,6 +227,10 @@ namespace cAlgo.Robots
         ExponentialMovingAverage EMAfast;
         ExponentialMovingAverage EMAslow;
         ParabolicSAR SAR;
+
+        #endregion
+
+        #region cBot Events
 
         /// <summary>
         /// Eseguita una sola volta, alla partenza del cbot, inizializziamo le informazioni che ci interessano
@@ -300,9 +318,14 @@ namespace cAlgo.Robots
         {
 
             // --> Se abilitato per mezzo dell'attivazione controllo la modifica del breakeven
-            if (BEfrom > 0) _checkBE(BEfrom);
+            if (BEfrom > 0)
+                _checkBE(BEfrom);
 
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Calcola la condizione favolrevole del filtro in ottica long
@@ -313,7 +336,8 @@ namespace cAlgo.Robots
         {
 
             // --> Se la condizione condivisa non è presente è inutile continuare
-            if (!condition) return false;
+            if (!condition)
+                return false;
 
             // --> Devo partire dal basso, la deviazione deve ancora iniziare
             return (SAR.Result.Last(2) > Bars.HighPrices.Last(2) && SAR.Result.Last(1) > Bars.HighPrices.Last(1));
@@ -329,7 +353,8 @@ namespace cAlgo.Robots
         {
 
             // --> Se la condizione condivisa non è presente è inutile continuare
-            if (!condition) return false;
+            if (!condition)
+                return false;
 
             // --> Devo partire dall'alto, la deviazione deve ancora iniziare
             return (SAR.Result.Last(2) < Bars.LowPrices.Last(2) && SAR.Result.Last(1) < Bars.LowPrices.Last(1));
@@ -366,7 +391,8 @@ namespace cAlgo.Robots
         {
 
             // --> Se il filtro non è soddisfatto è inutile proseguire
-            if (!filter) return false;
+            if (!filter)
+                return false;
 
             // --> Restituisco la condizione
             return _haveEngulfingBullish();
@@ -382,7 +408,8 @@ namespace cAlgo.Robots
         {
 
             // --> Se il filtro non è soddisfatto è inutile proseguire
-            if (!filter) return false;
+            if (!filter)
+                return false;
 
             // --> Restituisco la condizione
             return _haveEngulfingBearish();
@@ -413,7 +440,8 @@ namespace cAlgo.Robots
             double wifeBody = (Bars.OpenPrices.Last(2) - Bars.ClosePrices.Last(2)) / Symbol.PipSize;
             double husbandBody = (Bars.ClosePrices.Last(1) - Bars.OpenPrices.Last(1)) / Symbol.PipSize;
 
-            if (Bars.HighPrices.Last(2) >= Bars.HighPrices.Last(1) || Bars.LowPrices.Last(2) < Bars.LowPrices.Last(1)) return false;
+            if (Bars.HighPrices.Last(2) >= Bars.HighPrices.Last(1) || Bars.LowPrices.Last(2) < Bars.LowPrices.Last(1))
+                return false;
 
             // --> le proporzioni vengono definite dall'utente
             double tmp = _getPercentageOf(wifeBody, husbandBody);
@@ -421,10 +449,14 @@ namespace cAlgo.Robots
             // --> Debug : Print("{0} - {1} - {2} - {3} - {4} - {5}", wifeBody <= 0, husbandBody <= 0, husbandBody, husbandBody > MaxHusband, wifeBody >= husbandBody, tmp < WifePercent);
 
             // --> Escludo le condizioni sfavorevoli
-            if (wifeBody <= 0 || husbandBody <= 0 || husbandBody < MinHusband || husbandBody > MaxHusband || wifeBody >= husbandBody || tmp < WifePercent || tmp > WifePercentMax) return false;
-            if (Bars.HighPrices.Last(1) >= EMAfast.Result.Last(1)) return false;
-            if (!(Symbol.Ask < EMAfast.Result.LastValue && Symbol.Ask < EMAslow.Result.LastValue && EMAfast.Result.LastValue < EMAslow.Result.LastValue)) return false;
-            if (TOP > 0 && Bars.LowPrices.Minimum(TOP) != Bars.LowPrices.Last(1)) return false;
+            if (wifeBody <= 0 || husbandBody <= 0 || husbandBody < MinHusband || husbandBody > MaxHusband || wifeBody >= husbandBody || tmp < WifePercent || tmp > WifePercentMax)
+                return false;
+            if (Bars.HighPrices.Last(1) >= EMAfast.Result.Last(1))
+                return false;
+            if (!(Symbol.Ask < EMAfast.Result.LastValue && Symbol.Ask < EMAslow.Result.LastValue && EMAfast.Result.LastValue < EMAslow.Result.LastValue))
+                return false;
+            if (TOP > 0 && Bars.LowPrices.Minimum(TOP) != Bars.LowPrices.Last(1))
+                return false;
 
             return true;
 
@@ -441,7 +473,8 @@ namespace cAlgo.Robots
             double wifeBody = (Bars.ClosePrices.Last(2) - Bars.OpenPrices.Last(2)) / Symbol.PipSize;
             double husbandBody = (Bars.OpenPrices.Last(1) - Bars.ClosePrices.Last(1)) / Symbol.PipSize;
 
-            if (Bars.HighPrices.Last(2) >= Bars.HighPrices.Last(1) || Bars.LowPrices.Last(2) < Bars.LowPrices.Last(1)) return false;
+            if (Bars.HighPrices.Last(2) >= Bars.HighPrices.Last(1) || Bars.LowPrices.Last(2) < Bars.LowPrices.Last(1))
+                return false;
 
             // --> le proporzioni vengono definite dall'utente
             double tmp = _getPercentageOf(wifeBody, husbandBody);
@@ -449,10 +482,14 @@ namespace cAlgo.Robots
             // --> Debug : Print("{0} - {1} - {2} - {3} - {4} - {5}", wifeBody <= 0, husbandBody <= 0, husbandBody, husbandBody > MaxHusband, wifeBody >= husbandBody, tmp < WifePercent);
 
             // --> Escludo le condizioni sfavorevoli
-            if (wifeBody <= 0 || husbandBody <= 0 || husbandBody < MinHusband || husbandBody > MaxHusband || wifeBody >= husbandBody || tmp < WifePercent || tmp > WifePercentMax) return false;
-            if (!(Symbol.Bid > EMAfast.Result.LastValue && Symbol.Bid > EMAslow.Result.LastValue && EMAfast.Result.LastValue > EMAslow.Result.LastValue)) return false;
-            if (Bars.LowPrices.Last(1) <= EMAfast.Result.Last(1)) return false;
-            if (TOP > 0 && Bars.HighPrices.Maximum(TOP) != Bars.HighPrices.Last(1)) return false;
+            if (wifeBody <= 0 || husbandBody <= 0 || husbandBody < MinHusband || husbandBody > MaxHusband || wifeBody >= husbandBody || tmp < WifePercent || tmp > WifePercentMax)
+                return false;
+            if (!(Symbol.Bid > EMAfast.Result.LastValue && Symbol.Bid > EMAslow.Result.LastValue && EMAfast.Result.LastValue > EMAslow.Result.LastValue))
+                return false;
+            if (Bars.LowPrices.Last(1) <= EMAfast.Result.Last(1))
+                return false;
+            if (TOP > 0 && Bars.HighPrices.Maximum(TOP) != Bars.HighPrices.Last(1))
+                return false;
 
             return true;
 
@@ -521,7 +558,8 @@ namespace cAlgo.Robots
         private double _calculateSize(double mySL)
         {
 
-            if (mySL > 0) return _getLotSize(_getMyCapital(MyCapital), mySL, MyRisk, MinLots, MaxLots);
+            if (mySL > 0)
+                return _getLotSize(_getMyCapital(MyCapital), mySL, MyRisk, MinLots, MaxLots);
             /*
             if (fakeSL > 0)return _getLotSize(_getMyCapital(MyCapital), fakeSL, MyRisk, MinLots, MaxLots);
             */
@@ -553,8 +591,10 @@ namespace cAlgo.Robots
 
             double lots = Math.Round(Symbol.VolumeInUnitsToQuantity(moneyrisk / ((sl_double * Symbol.TickValue) / Symbol.TickSize)), 2);
 
-            if (lots < Minim) return Minim;
-            if (lots > Maxi) return Maxi;
+            if (lots < Minim)
+                return Minim;
+            if (lots > Maxi)
+                return Maxi;
 
             return lots;
 
@@ -578,8 +618,8 @@ namespace cAlgo.Robots
                 case AccCapital.FreeMargin:
 
                     return Account.FreeMargin;
-
                 default:
+
 
                     return Account.Balance;
 
@@ -621,7 +661,8 @@ namespace cAlgo.Robots
         {
 
             // --> Controllo disabilitato
-            if (PauseUnder == 0 && PauseOver == 0) return false;
+            if (PauseUnder == 0 && PauseOver == 0)
+                return false;
 
             // --> Utilizzo una logica long quindi devo tradurla in time
             string nowHour = (Server.Time.Hour < 10) ? string.Format("0{0}", Server.Time.Hour) : string.Format("{0}", Server.Time.Hour);
@@ -657,10 +698,10 @@ namespace cAlgo.Robots
                 return;
 
             // --> Organizzo i dati per la richiesta degli aggiornamenti
-            Guru.API.RequestProductInfo Request = new Guru.API.RequestProductInfo
+            Guru.API.RequestProductInfo Request = new Guru.API.RequestProductInfo 
             {
 
-                MyProduct = new Guru.Product
+                MyProduct = new Guru.Product 
                 {
 
                     ID = ID,
@@ -696,6 +737,8 @@ namespace cAlgo.Robots
             }
 
         }
+
+        #endregion
 
     }
 
@@ -809,7 +852,7 @@ namespace Guru
             {
 
                 // --> Strutturo le informazioni per la richiesta POST
-                NameValueCollection data = new NameValueCollection
+                NameValueCollection data = new NameValueCollection 
                 {
                     {
                         "account_broker",
@@ -854,8 +897,7 @@ namespace Guru
                 // -->>> Nel cBot necessita l'attivazione di "AccessRights = AccessRights.FullAccess"
                 ProductInfo.LastProduct = JsonConvert.DeserializeObject<Product>(ProductInfo.Source);
 
-            }
-            catch (Exception Exp)
+            } catch (Exception Exp)
             {
 
                 // --> Qualcosa è andato storto, registro l'eccezione
