@@ -1,4 +1,4 @@
-﻿/*  CTRADER GURU
+/*  CTRADER GURU
 
     Homepage    : https://ctrader.guru/
     Telegram    : https://t.me/ctraderguru
@@ -13,6 +13,7 @@ using System;
 using cAlgo.API;
 using cAlgo.API.Indicators;
 using cAlgo.API.Internals;
+using cTrader.Guru.Extensions;
 
 namespace cAlgo
 {
@@ -330,30 +331,6 @@ namespace cAlgo
 
             }
 
-            public bool InPause(DateTime timeserver)
-            {
-
-                string nowHour = (timeserver.Hour < 10) ? string.Format("0{0}", timeserver.Hour) : string.Format("{0}", timeserver.Hour);
-                string nowMinute = (timeserver.Minute < 10) ? string.Format("0{0}", timeserver.Minute) : string.Format("{0}", timeserver.Minute);
-
-                double adesso = Convert.ToDouble(string.Format("{0},{1}", nowHour, nowMinute));
-
-                if (Pause.Over < Pause.Under && adesso >= Pause.Over && adesso <= Pause.Under)
-                {
-
-                    return true;
-
-                }
-                else if (Pause.Over > Pause.Under && ((adesso >= Pause.Over && adesso <= 23.59) || adesso <= Pause.Under))
-                {
-
-                    return true;
-
-                }
-
-                return false;
-
-            }
 
             private void CheckBreakEven(Position position, BreakEvenData breakevendata)
             {
@@ -748,7 +725,7 @@ namespace cAlgo
 namespace cAlgo.Robots
 {
 
-    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
     public class Engulfing : Robot
     {
 
@@ -769,7 +746,7 @@ namespace cAlgo.Robots
 
         public const string NAME = "Engulfing";
 
-        public const string VERSION = "1.0.4";
+        public const string VERSION = "1.0.5";
 
         #endregion
 
@@ -825,6 +802,26 @@ namespace cAlgo.Robots
 
         [Parameter("Pause under this time", Group = "Filters", DefaultValue = 3, MinValue = 0, MaxValue = 23.59)]
         public double PauseUnder { get; set; }
+
+
+        public bool IAmInPause
+        {
+
+            get
+            {
+
+                if (PauseOver == 0 && PauseUnder == 0)
+                    return false;
+
+                double now = Server.Time.ToDouble();
+
+                bool intraday = (PauseOver < PauseUnder && now >= PauseOver && now <= PauseUnder);
+                bool overnight = (PauseOver > PauseUnder && ((now >= PauseOver && now <= 23.59) || now <= PauseUnder));
+
+                return intraday || overnight;
+
+            }
+        }
 
         [Parameter("Max GAP Allowed (pips)", Group = "Filters", DefaultValue = 1, MinValue = 0, Step = 0.01)]
         public double GAP { get; set; }
@@ -964,7 +961,7 @@ namespace cAlgo.Robots
         private void Loop(Extensions.Monitor monitor, Extensions.MonenyManagement moneymanagement)
         {
 
-            bool sharedCondition = (!monitor.OpenedInThisBar && !monitor.InGAP(GAP) && !monitor.InPause(Server.Time) && monitor.Symbol.RealSpread() <= SpreadToTrigger && monitor.Positions.Length < MaxTrades);
+            bool sharedCondition = (!monitor.OpenedInThisBar && !monitor.InGAP(GAP) && !IAmInPause && monitor.Symbol.RealSpread() <= SpreadToTrigger && monitor.Positions.Length < MaxTrades);
 
             bool triggerBuy = CalculateLongTrigger(CalculateLongFilter(sharedCondition));
             bool triggerSell = CalculateShortTrigger(CalculateShortFilter(sharedCondition));
